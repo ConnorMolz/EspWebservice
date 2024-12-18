@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  http-service:
+    image: http-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+        - PORT=8080
+        - DB_HOST= 127.0.0.1:5432
+        - DB_USER=postgres
+        - DB_PASSWORD=test
+        - DB_NAME=test_db
+  postgres:
+    image: bitnami/postgresql:latest
+    ports:
+      - "5432:5432"
+    volumes:
+      - ~/apps/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD=test
+      - POSTGRESQL_PASSWORD=test
+      - POSTGRESQL_DB=test_db
