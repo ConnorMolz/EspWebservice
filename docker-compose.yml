@@ -9,18 +9,28 @@ services:
     ports:
       - "8080:8080"
     environment:
-        - PORT=8080
-        - DB_HOST= 127.0.0.1:5432
-        - DB_USER=postgres
-        - DB_PASSWORD=test
-        - DB_NAME=test_db
-  postgres:
-    image: bitnami/postgresql:latest
+      - PORT=8080
+      - DB_HOST=db:5432
+      - DB_USER=user
+      - DB_PASSWORD=test
+      - DB_NAME=smart_home
+    links:
+      - "db:db"
+
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: ""
+      POSTGRES_USER: "user"
     ports:
       - "5432:5432"
     volumes:
-      - ~/apps/postgres:/var/lib/postgresql/data
-    environment:
-      - POSTGRESQL_POSTGRES_PASSWORD=test
-      - POSTGRESQL_PASSWORD=test
-      - POSTGRESQL_DB=test_db
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres-db-volume:/var/lib/postgresql
+
+
+volumes:
+  postgres-db-volume:
+    name: postgres-db-volume
