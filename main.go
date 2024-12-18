@@ -13,9 +13,9 @@ import (
 
 // Data structs from the ESP
 type plantData struct {
-	moist       float64
-	humidity    float64
-	temperature float64
+	Moist       float64 `json:"moist"`
+	Humidity    float64 `json:"humidity"`
+	Temperature float64 `json:"temperature"`
 }
 
 func main() {
@@ -51,13 +51,14 @@ func initRouter() *mux.Router {
 }
 
 func handleDataPost(w http.ResponseWriter, r *http.Request) {
-	err := json.NewDecoder(r.Body).Decode(&plantData{})
+	newEntry := plantData{}
+	err := json.NewDecoder(r.Body).Decode(&newEntry)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	savePlantData(plantData{})
+	savePlantData(newEntry)
 
 	_, err = fmt.Fprintf(w, "Ok")
 	if err != nil {
@@ -67,6 +68,7 @@ func handleDataPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func savePlantData(plantData plantData) {
+	fmt.Println(plantData)
 	var connectionString = getDBConnectionString()
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
@@ -77,9 +79,9 @@ func savePlantData(plantData plantData) {
 	_, err = db.Exec(
 		"INSERT INTO smart_plants(date, moist, humidity, temperature) VALUES ($1, $2, $3, $4) ",
 		time.Now(),
-		plantData.moist,
-		plantData.humidity,
-		plantData.temperature,
+		plantData.Moist,
+		plantData.Humidity,
+		plantData.Temperature,
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -105,7 +107,8 @@ func getDBConnectionString() string {
 	var connectionString = "postgresql://"
 	connectionString += os.Getenv("DB_USER") + ":"
 	connectionString += os.Getenv("DB_PASSWORD") + "@"
-	connectionString += "host=" + os.Getenv("DB_HOST") + ";"
+	connectionString += os.Getenv("DB_HOST")
 	connectionString += "/" + os.Getenv("DB_NAME") + "?sslmode=disable"
+	fmt.Println(connectionString)
 	return connectionString
 }
