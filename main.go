@@ -46,6 +46,8 @@ func initRouter() *mux.Router {
 
 	// Handle Data upload
 	router.HandleFunc("/smart_plant", handleDataPost).Methods("POST")
+	// Handle Data download
+	router.HandleFunc("/smart_plant", handleDataGet).Methods("GET")
 
 	return router
 }
@@ -62,7 +64,22 @@ func handleDataPost(w http.ResponseWriter, r *http.Request) {
 
 	_, err = fmt.Fprintf(w, "Ok")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("%v", err.Error())
+		return
+	}
+}
+
+func handleDataGet(w http.ResponseWriter, r *http.Request) {
+	allPlants, err := getAllPlantData()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(allPlants)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -111,4 +128,36 @@ func getDBConnectionString() string {
 	connectionString += "/" + os.Getenv("DB_NAME") + "?sslmode=disable"
 	fmt.Println(connectionString)
 	return connectionString
+}
+
+func getAllPlantData() ([]plantData, error) {
+	var connectionString = getDBConnectionString()
+	db, err := sql.Open("postgres", connectionString)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT moist, humidity, temperature FROM smart_plants")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var plants []plantData
+	for rows.Next() {
+		var plant plantData
+		err := rows.Scan(&plant.Moist, &plant.Humidity, &plant.Temperature)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("Moist: %v, Humidity: %v, Temperature: %v\n", plant.Moist, plant.Humidity, plant.Temperature)
+		plants = append(plants, plant)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return plants, nil
 }
