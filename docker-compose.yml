@@ -2,10 +2,7 @@ version: '3.9'
 
 services:
   http-service:
-    image: http-service
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/connormolz/espwebservice:latest
     ports:
       - "8080:8080"
     environment:
