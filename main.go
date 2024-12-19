@@ -45,7 +45,7 @@ func initRouter() *mux.Router {
 	var router = mux.NewRouter()
 
 	// Handle Data upload
-	router.HandleFunc("/", handleDataPost).Methods("POST")
+	router.HandleFunc("/smart_plant", handleDataPost).Methods("POST")
 
 	return router
 }
