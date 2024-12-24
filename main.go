@@ -13,6 +13,7 @@ import (
 
 // Data structs from the ESP
 type plantData struct {
+	Id          int     `json:"id"`
 	Moist       float64 `json:"moist"`
 	Humidity    float64 `json:"humidity"`
 	Temperature float64 `json:"temperature"`
@@ -94,11 +95,12 @@ func savePlantData(plantData plantData) {
 	}
 
 	_, err = db.Exec(
-		"INSERT INTO smart_plants(date, moist, humidity, temperature) VALUES ($1, $2, $3, $4) ",
+		"INSERT INTO smart_plants(date, moist, humidity, temperature, sensor_id) VALUES ($1, $2, $3, $4, $5) ",
 		time.Now(),
 		plantData.Moist,
 		plantData.Humidity,
 		plantData.Temperature,
+		plantData.Id,
 	)
 	if err != nil {
 		fmt.Println(err)
@@ -138,7 +140,7 @@ func getAllPlantData() ([]plantData, error) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT moist, humidity, temperature FROM smart_plants")
+	rows, err := db.Query("SELECT moist, humidity, temperature, sensor_id FROM smart_plants")
 	if err != nil {
 		return nil, err
 	}
@@ -151,6 +153,7 @@ func getAllPlantData() ([]plantData, error) {
 		if err != nil {
 			return nil, err
 		}
+		fmt.Printf("From Sensor: %v\n", plant.Id)
 		fmt.Printf("Moist: %v, Humidity: %v, Temperature: %v\n", plant.Moist, plant.Humidity, plant.Temperature)
 		plants = append(plants, plant)
 	}
