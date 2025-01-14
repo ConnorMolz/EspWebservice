@@ -1,0 +1,120 @@
+---
+# PersistentVolume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+  namespace: api-provider
+spec:
+  capacity:
+    storage: 5Gi  # Adjust size as needed
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: standard
+  hostPath:    # You might want to change this based on your cluster's storage solution
+    path: /data/postgres-db-volume
+---
+# PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: api-provider
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 1Gi  # Adjust size as needed
+---
+# ConfigMap for init.sql
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: api-provider
+data:
+  init.sql: |
+    CREATE DATABASE smart_home;
+  
+    \c smart_home;
+  
+    CREATE TABLE smart_plants
+    (
+    id         SERIAL PRIMARY KEY,
+    sensor_id INT   NOT NULL,
+    moist      FLOAT NOT NULL,
+    temperature FLOAT NOT NULL,
+    humidity   FLOAT NOT NULL,
+    date       TEXT  NOT NULL
+    );
+---
+# Secret for PostgreSQL credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secrets
+  namespace: api-provider
+type: Opaque
+data:
+  POSTGRES_PASSWORD: dGVzdA==  # 'test' in base64 !!! PLEASE CHANGE THIS !!!
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: api-provider
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "user"
+            - name: POSTGRES_DB
+              value: ""
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql
+            - name: init-script
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+        - name: init-script
+          configMap:
+            name: postgres-init-script
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: api-provider
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP  # Change to NodePort or LoadBalancer if external access is needed

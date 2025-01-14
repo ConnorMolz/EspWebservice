@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-provider
+  namespace: api-provider
+  labels:
+    app: api-provider
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-provider
+  template:
+    metadata:
+      name: api-provider
+      labels:
+        app: api-provider
+    spec:
+      containers:
+        - name: api-provider
+          image: ghcr.io/connormolz/espwebservice
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8080"
+            - name: DB_HOST
+              value: "postgres.api-provider.svc.cluster.local:5432"
+            - name: DB_USER
+              value: "user"
+            - name: DB_PASSWORD
+              value: "test"
+            - name: DB_NAME
+              value: "smart_home"
+      restartPolicy: Always
+
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-provider
+  namespace: api-provider
+spec:
+  selector:
+    app: api-provider
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP  # Change to NodePort or LoadBalancer if external access is needed
+
+
+---
+# Loadbalancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-provider-lb
+  namespace: api-provider
+spec:
+  selector:
+    app: api-provider    # This must match the labels in your api-provider deployment
+  ports:
+    - name: api-provider
+      protocol: TCP
+      port: 8080        # The port the service listens on
+      targetPort: 8080  # The port the container listens on
+  type: LoadBalancer
