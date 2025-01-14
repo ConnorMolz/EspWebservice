@@ -60,10 +60,10 @@ metadata:
   namespace: api-provider
 spec:
   selector:
-    app: postgres    # This must match the labels in your postgres deployment
+    app: api-provider    # This must match the labels in your api-provider deployment
   ports:
-    - name: postgres
+    - name: api-provider
       protocol: TCP
-      port: 5432        # The port the service listens on
-      targetPort: 5432  # The port the container listens on
+      port: 8080        # The port the service listens on
+      targetPort: 8080  # The port the container listens on
   type: LoadBalancer
