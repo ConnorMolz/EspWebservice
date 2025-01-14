@@ -118,3 +118,20 @@ spec:
     - port: 5432
       targetPort: 5432
   type: ClusterIP  # Change to NodePort or LoadBalancer if external access is needed
+
+#---
+# Loadbalancer
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: postgres-lb
+#  namespace: api-provider
+#spec:
+#  selector:
+#    app: postgres    # This must match the labels in your api-provider deployment
+#  ports:
+#    - name: postgres
+#      protocol: TCP
+#      port: 5432        # The port the service listens on
+#      targetPort: 5432  # The port the container listens on
+#  type: LoadBalancer
