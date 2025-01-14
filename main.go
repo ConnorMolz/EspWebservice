@@ -149,7 +149,8 @@ func getAllPlantData() ([]plantData, error) {
 	var plants []plantData
 	for rows.Next() {
 		var plant plantData
-		err := rows.Scan(&plant.Moist, &plant.Humidity, &plant.Temperature)
+		fmt.Printf("plant: %v\n", plant)
+		err := rows.Scan(&plant.Moist, &plant.Humidity, &plant.Temperature, &plant.Id)
 		if err != nil {
 			return nil, err
 		}
